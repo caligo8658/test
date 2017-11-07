@@ -1,0 +1,43 @@
+# vim:ft=ansible:
+#
+- name: Add an apt key for nginx by id from a keyserver
+  apt_key:
+    url: "http://nginx.org/keys/nginx_signing.key"
+
+- name: Add an apt key for dotdeb by id from a keyserver
+  apt_key:
+    url: http://www.dotdeb.org/dotdeb.gpg
+
+- name: Install nginx repo
+  apt_repository:
+    repo: deb http://nginx.org/packages/debian/ stretch nginx
+    state: present 
+
+- name: Install nginx repo
+  apt_repository:
+    repo: deb http://packages.dotdeb.org stretch all
+    state: present 
+    
+- name: Update all packages to the latest version
+  apt:
+    upgrade: dist
+
+- name: Install packages
+  apt: name={{item}} state=installed
+  with_items:
+    - apache2
+    - nginx
+    - php-fpm
+    - mysql-server
+    - php-mysql
+    - vim
+    - mc
+    - python-mysqldb
+    - net-tools
+    - php7.0-xml
+
+- name: Download Joomla
+  get_url:
+    url: https://github.com/joomla/joomla-cms/releases/download/3.8.1/Joomla_3.8.1-Stable-Full_Package.tar.gz
+    dest: /tmp/joomla.tar.gz
+    mode: 0440

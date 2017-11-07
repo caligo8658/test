@@ -1,0 +1,21 @@
+server {
+    listen 80;
+    root /var/www/{{ dclient }}; 
+    index index.php index.html index.htm;
+    server_name {{ dclient }}.local;
+    
+    location / {
+        try_files $uri $uri/ /index.php;
+    }
+    
+    location ~ \.php$ {
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_pass http://127.0.0.1:{{ backend_port.stdout }};
+    }
+
+    location ~ /\.ht {
+        deny all;
+    }
+}

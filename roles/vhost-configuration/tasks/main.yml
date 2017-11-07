@@ -1,0 +1,48 @@
+# vim:ft=ansible:
+#
+
+- name: Edit hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "127.0.0.1  {{ dclient }}.local"
+
+- name: Create sites directories
+  file:
+    path: "/var/www/{{ dclient}}"
+    state: directory
+
+- user:
+    name: "{{ dclient }}"
+    comment: "created by ansible"
+
+- name: upload free port detection script to destination
+  template:
+    src: free_port.j2
+    dest: /tmp/free_port.sh
+    mode: 0744
+
+- name: Detect free port for apache2 backend
+  shell:  /tmp/free_port.sh
+  register: backend_port
+
+- name: Templating nginx for {{ dclient }}
+  template:
+    src: nginx_vhost.j2
+    dest: "/etc/nginx/conf.d/{{ dclient }}.conf"
+    owner: nginx
+    group: nginx
+
+- name: Templating apache for {{ dclient }}
+  template:
+    src: apache_vhost.j2
+    dest: /etc/apache2/sites-enabled/{{ dclient }}.conf
+
+- name: Setting apache2 vhost ports
+  lineinfile:
+    path: /etc/apache2/ports.conf
+    line: "Listen {{ backend_port.stdout }}"
+
+- name: Templating fpm for {{ dclient }}
+  template:
+    src: fpm_pool.j2
+    dest: /etc/php/7.0/fpm/pool.d/www_{{ dclient }}.conf

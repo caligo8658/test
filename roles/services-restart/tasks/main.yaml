@@ -1,0 +1,12 @@
+# vim:ft=ansible:
+#
+
+- name: reload services
+  service:
+    name: "{{ item }}"
+    state: restarted
+  with_items:
+      - apache2
+      - php7.0-fpm
+      - nginx
+      - mysql

@@ -1,0 +1,19 @@
+<VirtualHost *:{{ backend_port.stdout }}>
+    ServerName {{ dclient }}.local
+    DocumentRoot /var/www/{{ dclient }}
+
+    <Directory /var/www/{{ dclient }}>
+        Options -Indexes +FollowSymLinks +MultiViews
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    <FilesMatch \.php$>
+        # 2.4.10+ can proxy to unix socket
+        # SetHandler "proxy:unix:/var/run/php5-fpm.sock|fcgi://localhost/"
+
+        # Else we can just use a tcp socket:
+      	SetHandler "proxy:unix:/var/run/php-fpm-{{ dclient }}.sock|fcgi://localhost/"
+    </FilesMatch>
+
+</VirtualHost>

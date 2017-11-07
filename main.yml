@@ -1,0 +1,34 @@
+# vim:ft=ansible:
+#
+
+
+- hosts: all
+  become: true
+  tasks: 
+    - name: services-installation
+      include_role:
+        name: services-installation
+
+    - name: service-configuration
+      include_role:
+        name: services-configuration
+
+    - name: vhost-configuration
+      include_role:
+        name: vhost-configuration
+      vars:
+        dclient: "{{ item }}"
+      with_items:
+        - "{{ client }}"
+    
+    - name: services-restart
+      include_role:
+        name: services-restart
+
+    - name: joomla-installation
+      include_role:
+        name: joomla-installation 
+      vars:
+        dclient: "{{ item }}"
+      with_items:
+        - "{{ client }}"

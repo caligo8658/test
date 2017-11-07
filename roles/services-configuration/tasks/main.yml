@@ -1,0 +1,78 @@
+# vim:ft=ansible:
+#
+
+- apache2_module:
+    state: present
+    name: "{{ outer_item }}"
+  with_items:
+      - proxy
+      - proxy_balancer
+      - proxy_http
+      - proxy_fcgi
+
+  loop_control:
+    loop_var: outer_item
+
+- name: Remove defaults configs
+  file: path="{{ outer_item }}" state=absent
+  with_items:
+      - "/etc/apache2/sites-enabled/000-default.conf"
+      - "/etc/nginx/conf.d/default.conf"
+      - "/etc/php/7.0/fpm/pool.d/www.conf"
+  loop_control:
+    loop_var: outer_item
+
+- name: change nginx.conf
+  lineinfile:
+    path: /etc/nginx/nginx.conf
+    insertbefore: 'include'
+    line: 'reset_timedout_connection on;'
+
+- name: Change nginx user
+  replace:
+    path: /etc/nginx/nginx.conf
+    regexp: "user  nginx;"
+    replace: "user www-data;"
+
+- name: Memory limit for fpm
+  replace:
+    path: /etc/php/7.0/fpm/php.ini
+    regexp: "memory_limit = 128M"
+    replace: "memory_limit = 256M"
+
+- name: Memory limit for cli
+  replace:
+    path: /etc/php/7.0/cli/php.ini
+    regexp: "memory_limit = -1"
+    replace: "memory_limit = 256M"
+
+- name: max_connections for mysql
+  lineinfile:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    insertbefore: "#max_connections"
+    line: 'max_connections        = 700'
+
+- name: delete default apache2 ports
+  lineinfile:
+    path: /etc/apache2/ports.conf
+    regexp: '^Listen 80'
+    line: ""
+
+- mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: Set root password
+  mysql_user: 
+    name: root 
+    password: root 
+    host: "{{ item }}" 
+    priv: "*.*:ALL,GRANT"
+    state: present 
+    update_password: always
+  with_items:
+      - "{{ ansible_hostname }}"
+      - 127.0.0.1
+      - ::1
+      - localhost

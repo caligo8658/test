@@ -1,0 +1,29 @@
+# vim:ft=ansible:
+#
+
+- name: Unarchive joomla
+  unarchive:
+    src: /tmp/joomla.tar.gz
+    dest: /var/www/{{ dclient }}
+    remote_src: yes
+
+- name: Create {{ dclient }} database
+  mysql_db:
+    name: "joomla_{{ dclient }}"
+    state: present
+
+- name: Add deploy vhost mysql user and allow access to joomla_{{ dclient }} database
+  mysql_user: 
+    name: "{{ dclient }}" 
+    password: "{{ dclient }}" 
+    host: "%" 
+    priv: "joomla_{{ dclient }}.*:ALL" 
+    state: present
+
+- name: Aceess to user {{ dclient }}
+  file:
+    path: "/var/www/{{ dclient }}"
+    owner: www-data
+    group: "{{ dclient }}"
+    recurse: yes
+    mode: 0770
